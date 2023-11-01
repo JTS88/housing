@@ -9,4 +9,5 @@ COPY . .
 
 RUN conda env create -f conda_environment.yml
 
-CMD ["conda", "run", "-n", "housing", "uvicorn", "serve_model:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "3"]
+CMD [ "conda", "run", "-n", "housing", "uvicorn", "serve_model:app", "--host", "0.0.0.0", "--port", "8000", \
+     "--reload", "--reload-include", "data/*" ]
