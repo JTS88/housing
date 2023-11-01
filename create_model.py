@@ -4,10 +4,11 @@ import pickle
 from typing import List
 from typing import Tuple
 
+import numpy as np
 import pandas
-import pandas as pd
+from boruta import BorutaPy
+from sklearn import ensemble
 from sklearn import model_selection
-from sklearn import neighbors
 from sklearn import pipeline
 from sklearn import preprocessing
 from sklearn.metrics import r2_score
@@ -44,15 +45,46 @@ def load_data(
                            dtype={'zipcode': str})
     demographics = pandas.read_csv(demographics_path,
                                    dtype={'zipcode': str})
-    #demographics = pd.DataFrame(data=[{'zipcode': '1'}])
+
+    # dummy demographics dataframe
+    # demographics = pd.DataFrame(data=[{'zipcode': '1'}])
 
     merged_data = data.merge(demographics, how="left",
-                             on="zipcode")#.drop(columns="zipcode")
+                             on="zipcode")  # .drop(columns="zipcode")
+
+    # keep the columns suggested by boruta
+    # merged_data = merged_data[[
+    #     'price', 'bathrooms', 'grade', 'hous_val_amt', 'medn_incm_per_prsn_amt', 'per_bchlr', 'per_prfsnl', 'sqft_above', 'sqft_living', 'sqft_lot', 'view', 'waterfront' ]]
+
     # Remove the target variable from the dataframe, features will remain
     y = merged_data.pop('price')
     x = merged_data
 
     return x, y
+
+
+def feature_selector(X, Y) -> None:
+    model = ensemble.RandomForestRegressor(n_estimators=100, max_depth=5, random_state=42)
+    feat_selector = BorutaPy(
+        verbose=2,
+        estimator=model,
+        n_estimators='auto',
+        max_iter=10  # number of iterations to perform
+    )
+
+    # train Boruta
+    # N.B.: X and y must be numpy arrays
+    feat_selector.fit(np.array(X), np.array(Y))
+
+    # print support and ranking for each feature
+    print("\n------Support and Ranking for each feature------")
+    for i in range(len(feat_selector.support_)):
+        if feat_selector.support_[i]:
+            print("Passes the test: ", X.columns[i],
+                  " - Ranking: ", feat_selector.ranking_[i])
+        else:
+            print("Doesn't pass the test: ",
+                  X.columns[i], " - Ranking: ", feat_selector.ranking_[i])
 
 
 def main():
@@ -61,9 +93,15 @@ def main():
     x_train, _x_test, y_train, _y_test = model_selection.train_test_split(
         x, y, random_state=42)
 
+    # call the feature selection
+    # feature_selector(x, y)
+
+    # model = pipeline.make_pipeline(preprocessing.RobustScaler(),
+    #                                neighbors.KNeighborsRegressor(n_neighbors=5)).fit(x_train, y_train)
     model = pipeline.make_pipeline(preprocessing.RobustScaler(),
-                                   neighbors.KNeighborsRegressor()).fit(
-        x_train, y_train)
+                                   ensemble.RandomForestRegressor(n_estimators=100)).fit(x_train, y_train)
+    # model = pipeline.make_pipeline(preprocessing.RobustScaler(),
+    #                                ensemble.GradientBoostingRegressor()).fit(x_train, y_train)
 
     preds = model.predict(_x_test)
 
