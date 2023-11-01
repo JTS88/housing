@@ -1,10 +1,13 @@
 import json
 import pathlib
 import pickle
+import logging
 
 import pandas as pd
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 DEMOGRAPHICS_PATH = 'data/zipcode_demographics.csv'  # path to CSV with demographics
 MODEL_DIR = 'model'  # Directory where model will be loaded
@@ -64,6 +67,7 @@ async def estimate_price(request_data: PriceRequest):
 
 def load_demographics(demographics_path: str) -> pd.DataFrame:
     dgdata = pd.read_csv(demographics_path, dtype={'zipcode': str})
+    logger.info(f'Loaded {len(dgdata.index)} demographics records')
 
     return dgdata
 
@@ -73,6 +77,7 @@ def load_model(model_path: str, model_file: str, feature_list: str):
 
     model = pickle.load(open(model_dir / model_file, 'rb'))
     features = json.load(open(model_dir / feature_list, 'r'))
+    logger.info(f'Loaded model "{model_file}" and feature list "{feature_list}" from "{model_path}"')
 
     return model, features
 
@@ -87,4 +92,4 @@ features2 = features + ['zipcode']
 if __name__ == '__main__':
     import uvicorn
 
-    uvicorn.run('serve_model:app', host='0.0.0.0', port=8000, workers=1)
+    uvicorn.run('serve_model:app', host='0.0.0.0', port=8000, workers=1, reload=True, reload_includes=f'{MODEL_DIR}/*')

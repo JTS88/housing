@@ -9,3 +9,4 @@ dependencies:
 - fastapi=0.103.2
 - uvicorn=0.20.0
 - requests=2.31.0
+- watchfiles=0.20.0
