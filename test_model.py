@@ -5,12 +5,11 @@ import requests
 
 DATA_PATH = 'data/future_unseen_examples.csv'
 
-PRICE_URL = 'http://localhost:8000/api/price'
+PRICE_URL = 'http://localhost:8000/api/price2'
 
 
 def load_test_data(data_path: str) -> pd.DataFrame:
-    test_data = pd.read_csv(data_path,
-                            dtype={'zipcode': str})
+    test_data = pd.read_csv(data_path, dtype={'zipcode': str})
 
     return test_data
 
@@ -24,7 +23,7 @@ def main():
         response = requests.post(PRICE_URL, json=rec)
         jb = json.loads(response.content)
         print('Estimated price: ${0:.2f}'.format(jb['estimated_price']))
-        #break
+        # break
 
 
 if __name__ == "__main__":

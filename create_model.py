@@ -5,6 +5,7 @@ from typing import List
 from typing import Tuple
 
 import pandas
+import pandas as pd
 from sklearn import model_selection
 from sklearn import neighbors
 from sklearn import pipeline
@@ -16,7 +17,7 @@ DEMOGRAPHICS_PATH = "data/zipcode_demographics.csv"  # path to CSV with demograp
 # List of columns (subset) that will be taken from home sale data
 SALES_COLUMN_SELECTION = [
     'price', 'bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'floors',
-    'sqft_above', 'sqft_basement', 'zipcode'
+    'sqft_above', 'sqft_basement', 'zipcode', 'waterfront', 'view', 'condition', 'grade'
 ]
 OUTPUT_DIR = "model"  # Directory where output artifacts will be saved
 
@@ -43,9 +44,10 @@ def load_data(
                            dtype={'zipcode': str})
     demographics = pandas.read_csv(demographics_path,
                                    dtype={'zipcode': str})
+    #demographics = pd.DataFrame(data=[{'zipcode': '1'}])
 
     merged_data = data.merge(demographics, how="left",
-                             on="zipcode").drop(columns="zipcode")
+                             on="zipcode")#.drop(columns="zipcode")
     # Remove the target variable from the dataframe, features will remain
     y = merged_data.pop('price')
     x = merged_data
@@ -66,7 +68,7 @@ def main():
     preds = model.predict(_x_test)
 
     r2s = r2_score(_y_test.values, preds)
-    print(f'r2 score: {r2s}')
+    print(f'r2 score: {r2s:.6f}')
 
     output_dir = pathlib.Path(OUTPUT_DIR)
     output_dir.mkdir(exist_ok=True)
