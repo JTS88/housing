@@ -5,9 +5,11 @@
 
 FROM continuumio/anaconda3:2023.09-0
 
+WORKDIR /project
+
 COPY . .
 
 RUN conda env create -f conda_environment.yml
 
-CMD [ "conda", "run", "-n", "housing", "uvicorn", "serve_model:app", "--host", "0.0.0.0", "--port", "8000", \
-     "--reload", "--reload-include", "data/*" ]
+CMD [ "conda", "run", "-n", "housing", "--no-capture-output", "uvicorn", "serve_model:app", "--host", "0.0.0.0", "--port", "8000", \
+     "--reload", "--reload-include", "model/model*" ]
