@@ -10,3 +10,4 @@ dependencies:
 - uvicorn=0.20.0
 - requests=2.31.0
 - watchfiles=0.20.0
+- boruta_py=0.3
