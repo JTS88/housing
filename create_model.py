@@ -7,11 +7,12 @@ from typing import Tuple
 import numpy as np
 import pandas
 from boruta import BorutaPy
-from sklearn import ensemble
+from sklearn import ensemble, neighbors
 from sklearn import model_selection
 from sklearn import pipeline
 from sklearn import preprocessing
 from sklearn.metrics import r2_score
+
 
 SALES_PATH = "data/kc_house_data.csv"  # path to CSV with home sale data
 DEMOGRAPHICS_PATH = "data/zipcode_demographics.csv"  # path to CSV with demographics
@@ -50,7 +51,7 @@ def load_data(
     # demographics = pd.DataFrame(data=[{'zipcode': '1'}])
 
     merged_data = data.merge(demographics, how="left",
-                             on="zipcode")  # .drop(columns="zipcode")
+                             on="zipcode") # .drop(columns="zipcode")
 
     # keep the columns suggested by boruta
     # merged_data = merged_data[[
@@ -107,6 +108,13 @@ def main():
 
     r2s = r2_score(_y_test.values, preds)
     print(f'r2 score: {r2s:.6f}')
+
+    kf = model_selection.KFold(n_splits=10, shuffle=True, random_state=43)
+    scores = model_selection.cross_val_score(model, x, y, cv=kf, scoring='r2')
+
+    print('Cross-Validation Scores:', scores)
+    print(f'Mean Accuracy: {scores.mean():.6f}')
+    print(f'Standard Deviation: {scores.std():.6f}')
 
     output_dir = pathlib.Path(OUTPUT_DIR)
     output_dir.mkdir(exist_ok=True)
