@@ -1,11 +1,12 @@
 import json
+import logging
 import pathlib
 import pickle
-import logging
 
 import pandas as pd
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
+from starlette import status
 
 logger = logging.getLogger(__name__)
 
@@ -39,13 +40,26 @@ class PriceRequest(BaseModel):
 
 
 def make_prediction(df: pd.DataFrame) -> {}:
-    # add in the demographics data for this zipcode and remove any columns not in feature list
-    fq_data = df.merge(demographics, how='left', on='zipcode')[features]
+    try:
+        # add in the demographics data for this zipcode and remove any columns not in feature list
+        fq_data = df.merge(demographics, how='left', on='zipcode')[features]
 
-    # do the prediction
-    prediction = model.predict(fq_data)
+        # do the prediction
+        prediction = model.predict(fq_data)
+        return {'estimated_price': prediction[0]}
 
-    return {'estimated_price': prediction[0]}
+    except KeyError as ke:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ke.args[0]
+        )
+    except Exception as e:
+        logger.error(e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Unknown error occurred'
+        )
+
 
 
 @app.post('/api/price2')
@@ -92,4 +106,5 @@ features2 = features + ['zipcode']
 if __name__ == '__main__':
     import uvicorn
 
-    uvicorn.run('serve_model:app', host='0.0.0.0', port=8000, workers=1, reload=True, reload_includes=f'{MODEL_DIR}/*')
+    # uvicorn.run('serve_model:app', host='0.0.0.0', port=8000, workers=1, reload=True, reload_includes=f'{MODEL_DIR}/*')
+    uvicorn.run('serve_model:app', host='0.0.0.0', port=8000)
